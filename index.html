@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090910">
+<title>NOIR | فروشگاه گجت</title>
+<meta name="description" content="NOIR؛ فروشگاه گجت‌های مدرن با نمایش سه‌بعدی محصولات.">
+<meta property="og:title" content="NOIR | فروشگاه گجت">
+<meta property="og:description" content="گجت‌های مدرن در سه‌بعد؛ بچرخانشان و انتخاب کن.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎧%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo">نسخهٔ نمایشی NOIR — محصولات و قیمت‌ها آزمایشی هستند؛ فروش واقعی فعال نیست.</div>
+<header>
+  <a class="logo" href="#home">N<span>O</span>IR.</a>
+  <nav><a href="#home">خانه</a><a href="#products">محصولات</a><a href="#mirror">تالار آینه</a><a href="#about">درباره ما</a></nav>
+  <button class="btn" id="openCart">سبد خرید (<span id="count">۰</span>)</button>
+</header>
+
+<div id="listView">
+<section class="hero" id="home">
+  <div>
+    <div class="eyebrow">NOIR / TECH COLLECTION</div>
+    <h1>تکنولوژی،<br><span>با امضای تو.</span></h1>
+    <p>گجت‌های مدرن در سه‌بعد؛ بچرخانشان، از نزدیک ببینشان، بعد انتخاب کن.</p>
+    <div class="row"><a class="btn primary" href="#products">مشاهده محصولات</a><button class="btn" id="heroCode">دریافت کد تخفیف ۱۰٪</button></div>
+  </div>
+  <div class="view" id="heroView" style="--a:#b49aff" aria-hidden="true"></div>
+</section>
+<div class="perks">
+  <div class="perk"><b>ارسال رایگان</b><span>برای سفارش‌های بالای ۵ میلیون تومان</span></div>
+  <div class="perk"><b>گارانتی ۱۲ ماهه</b><span>تعویض در ۷ روز اول</span></div>
+  <div class="perk"><b>پشتیبانی ۷ روز هفته</b><span>پاسخ در کمتر از یک ساعت</span></div>
+</div>
+<section class="section" id="products">
+  <h2>محصولات منتخب</h2><div class="muted">کالکشن شماره ۰۰۱ — با موس روی هر محصول بچرخانید.</div>
+  <div class="tools">
+    <input id="search" type="search" placeholder="جست‌وجوی هدفون، کیبورد..." aria-label="جست‌وجوی محصول">
+    <select id="sort" aria-label="مرتب‌سازی"><option value="def">مرتب‌سازی: پیش‌فرض</option><option value="asc">ارزان‌ترین</option><option value="desc">گران‌ترین</option><option value="disc">بیشترین تخفیف</option></select>
+  </div>
+  <div class="cats" id="cats" role="tablist" aria-label="دسته‌بندی"></div>
+  <div class="grid" id="grid" aria-live="polite"></div>
+</section>
+<section class="section" id="mirror" aria-label="تالار آینه">
+  <div class="eyebrow">MIRROR HALL / 02</div><h2>تالار آینه</h2>
+  <div class="muted">حلقه را بکشید و رها کنید تا با شتاب بچرخد؛ روی کارت بزنید تا صفحهٔ محصول باز شود.</div>
+  <div class="mh-scene" id="mhScene" tabindex="0" role="group" aria-roledescription="carousel" aria-label="چرخ‌وفلک سه‌بعدی محصولات؛ با کلیدهای چپ و راست بچرخانید">
+    <div class="mh-world"><div class="mh-pool" id="mhPool"><i></i><i></i><i></i></div><div class="mh-ring" id="mhRing"></div></div>
+  </div>
+  <div class="mh-cap"><button class="btn" id="mhPrev" aria-label="قبلی">→</button><div aria-live="polite"><b id="mhName"></b><span class="muted" id="mhPrice"></span></div><button class="btn" id="mhNext" aria-label="بعدی">←</button></div>
+</section>
+<section class="section" id="about"><h2>انتخاب متفاوت تو.</h2><p class="muted">NOIR؛ یک تجربهٔ طراحی برای دنیای گجت‌ها.</p></section>
+</div>
+
+<main class="section hide" id="productView">
+  <div class="crumb"><a href="#home">خانه</a> / <a href="#products">محصولات</a> / <span id="crumbName"></span></div>
+  <div class="pdp" id="pdp">
+    <div class="view" id="pdpView"><div class="shadow"></div><div class="hint">بکشید تا بچرخد — یا فایل .glb را اینجا رها کنید</div></div>
+    <div>
+      <div class="eyebrow" id="pCat"></div><h1 id="pName"></h1><p class="muted" id="pDesc"></p>
+      <ul class="specs" id="pSpecs"></ul>
+      <div class="big"><span id="pPrice"></span> <span class="old" id="pOld"></span></div>
+      <div class="row" style="margin:0"><button class="btn primary" id="pAdd">افزودن به سبد</button><button class="btn" id="glbBtn">پیش‌نمایش مدل .glb</button><a class="btn" href="#products">بازگشت</a></div><input type="file" id="glbIn" accept=".glb" hidden>
+    </div>
+  </div>
+  <h2 style="margin-top:44px">محصولات مرتبط</h2><div class="grid" id="related" style="margin-top:16px"></div>
+</main>
+<footer>NOIR © ۲۰۲۶ — نسخهٔ نمایشی فروشگاه</footer>
+
+<div class="overlay" id="cartOverlay" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+  <div class="dialog">
+    <div class="dialog-head"><h2 id="cartTitle">سبد خرید آزمایشی</h2><button class="close" id="closeCart" aria-label="بستن">×</button></div>
+    <div id="cartItems"></div>
+    <div class="ship"><i id="shipBar"></i></div><div class="muted" id="shipText"></div>
+    <div class="coupon"><input id="code" placeholder="کد تخفیف (مثلاً NOIR10)" aria-label="کد تخفیف"><button class="btn" id="applyCode">اعمال</button></div>
+    <div class="msg" id="codeMsg" role="status"></div>
+    <div class="sum"><span>جمع کالاها</span><span id="subTotal"></span></div>
+    <div class="sum"><span>تخفیف</span><span id="discount"></span></div>
+    <div class="sum total"><span>مبلغ قابل پرداخت</span><span id="cartTotal"></span></div>
+    <button class="btn primary" id="demoCheckout" style="width:100%">ادامهٔ نمایشی</button>
+    <p class="muted">پرداخت و ثبت سفارش واقعی در این نسخه فعال نیست.</p>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
