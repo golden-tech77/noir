@@ -26,11 +26,21 @@ function el(t,c,x,a){const e=document.createElement(t);if(c)e.className=c;if(x!=
 function toast(t){const x=$('toast');x.textContent=t;x.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>x.classList.remove('show'),1800)}
 
 /* ---- 3D layered object: stacked SVG slices give real depth ---- */
+function artNode(p,onload){
+  const svg=()=>{const d=el('div');d.innerHTML='<svg viewBox="0 0 200 200" aria-hidden="true">'+ART[p.id]()+'</svg>';return d.firstChild};
+  const ex=['webp','png','jpg'];let k=0;
+  const i=el('img',null,null,{alt:p.name,draggable:'false',src:'images/p'+p.id+'.'+ex[0]});
+  i.addEventListener('load',()=>onload&&onload());
+  i.addEventListener('error',()=>{k++;if(k<ex.length)i.src='images/p'+p.id+'.'+ex[k];else i.replaceWith(svg())});
+  return i;
+}
 function makeObj(p,n,gap){
   const stage=el('div','stage'),obj=el('div','obj');
   stage.style.setProperty('--a',p.c);
   for(let i=0;i<n;i++){
-    const l=el('div','layer');l.innerHTML='<svg viewBox="0 0 200 200" aria-hidden="true">'+ART[p.id]()+'</svg>';
+    const l=el('div','layer');
+    if(i===n-1)l.append(artNode(p,()=>obj.querySelectorAll('.layer:not(:last-child)').forEach(x=>x.remove())));
+    else l.innerHTML='<svg viewBox="0 0 200 200" aria-hidden="true">'+ART[p.id]()+'</svg>';
     l.style.transform=`translateZ(${(i-(n-1)/2)*gap}px)`;
     if(i<n-1)l.style.filter=`brightness(${.55+.45*i/n})`;
     obj.append(l);
@@ -174,16 +184,17 @@ $('grid').addEventListener('click',e=>{const a=e.target.closest('[data-add]');if
 /* ---- routing: #p3 opens product 3 ---- */
 let pdpSpin;
 function route(){
-  const m=/^#p(\d+)$/.exec(location.hash),p=m&&products.find(x=>x.id===+m[1]);
-  $('listView').classList.toggle('hide',!!p);$('productView').classList.toggle('hide',!p);
+  const m=/^#p(\d+)$/.exec(location.hash),p=m&&products.find(x=>x.id===+m[1]);const co=location.hash==='#checkout';
+  $('listView').classList.toggle('hide',!!p||co);$('productView').classList.toggle('hide',!p);$('checkoutView').classList.toggle('hide',!co);
   if(pdpSpin){kill(pdpSpin);pdpSpin=null}
-  if(!p){document.title='NOIR | فروشگاه گجت';current=null;return}
+  if(!p){document.title=co?'تکمیل سفارش | NOIR':'NOIR | فروشگاه گجت';current=null;if(co){window.scrollTo(0,0);renderCheckout()}return}
   current=p;window.scrollTo(0,0);document.title=p.name+' | NOIR';
   $('pdp').style.setProperty('--a',p.c);$('pdpView').style.setProperty('--a',p.c);
   $('crumbName').textContent=p.name;$('pCat').textContent=CATS[p.category];$('pName').textContent=p.name;$('pDesc').textContent=p.desc;
   $('pPrice').textContent=fmt(p.price);$('pOld').textContent=p.old?fmt(p.old):'';
   $('pSpecs').replaceChildren(...p.s.map(([a,b])=>{const li=el('li');li.append(el('span',null,a),el('b',null,b));return li}));
   pdpSpin=spin($('pdpView'),p,{n:12,gap:6,auto:.4});
+  const ph=$('pPhoto'),seg=$('pSeg');ph.replaceChildren();seg.hidden=true;setView('3d');ph.append(artNode(p,()=>{seg.hidden=false;setView('img')}));
   $('related').replaceChildren(...products.filter(x=>x.id!==p.id&&x.category===p.category||x.id!==p.id).slice(0,3).map(card));
 }
 addEventListener('hashchange',route);
@@ -225,46 +236,129 @@ const closeCart=()=>{O.classList.remove('open');lastFocus&&lastFocus.focus&&last
 $('openCart').addEventListener('click',openCart);$('closeCart').addEventListener('click',closeCart);
 O.addEventListener('click',e=>{if(e.target===O)closeCart()});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&O.classList.contains('open'))closeCart()});
-$('demoCheckout').addEventListener('click',()=>toast('این نسخه نمایشی است؛ سفارشی ثبت نشد.'));
-/* ---- Mirror Hall ---- */
+$('demoCheckout').addEventListener('click',()=>{if(!cart.size){toast('سبد خرید خالی است');return}closeCart();location.hash='#checkout'});
+/* ---- Mirror Hall v2: starry sky + rippling water ---- */
 (function(){
-  const scene=$('mhScene'),ring=$('mhRing'),pool=$('mhPool');
-  const list=products.concat(products),N=list.length,step=360/N,cards=[],refs=[];
+  const scene=$('mhScene'),ring=$('mhRing'),ring2=$('mhRing2'),sky=$('mhSky'),rip=$('mhRip'),disp=$('mhDisp');
+  const sx=sky.getContext('2d'),rx=rip.getContext('2d');
+  const list=products.concat(products),N=list.length,P6=products.length,step=360/N,cards=[],refs=[];
+  const hex=c=>{const n=parseInt(c.slice(1),16);return (n>>16)+','+((n>>8)&255)+','+(n&255)};
+  if(RM)scene.classList.add('rm');
   list.forEach((p,i)=>{
-    const mk=m=>{const c=el('div','mh-card'+(m?' mir':''));c.style.setProperty('--a',p.c);
+    const mk=m=>{
+      const c=el('div','mh-card'+(m?' mir':'')),b=el('div','mh-bob'),f=el('div','mh-face');
+      c.style.setProperty('--a',p.c);
       c.style.transform='rotateY('+i*step+'deg) translateZ(var(--R))'+(m?' scaleY(-1)':'');
-      const f=el('div','mh-face');f.innerHTML='<svg viewBox="0 0 200 200" aria-hidden="true">'+ART[p.id]()+'</svg>';f.append(el('span',null,p.name));
-      c.append(f);if(!m)c.append(el('div','mh-glow'));return c};
-    const c=mk(false),r=mk(true);ring.append(c,r);cards.push(c);refs.push(r);
+      b.style.setProperty('--bd',(5+(i*1.7)%3.5)+'s');b.style.setProperty('--bl',(-((i*1.3)%5))+'s');b.style.setProperty('--br',((i%2?1:-1)*(.6+(i%3)*.3))+'deg');
+      f.append(artNode(p));
+      b.append(f);if(!m)b.append(el('div','mh-label',p.name));c.append(b);return c};
+    const c=mk(false),r=mk(true);ring.append(c);ring2.append(r);cards.push(c);refs.push(r);
     c.addEventListener('click',()=>{if(moved>6)return;if(i===front)location.hash='#p'+p.id;else snap(i)});
   });
+  products.forEach((p,k)=>{const b=el('button',null,null,{'aria-label':p.name});
+    b.addEventListener('click',()=>{let bi=k,bd=999;for(let i=k;i<N;i+=P6){const a=Math.abs((((i*step+ang)%360)+540)%360-180);if(a<bd){bd=a;bi=i}}snap(bi)});$('mhDots').append(b)});
   let ang=0,vel=0,drag=false,x0=0,moved=0,vis=false,running=false,front=-1,target=null,last=0;
-  function size(){const w=cards[0].offsetWidth;if(!w)return;scene.style.setProperty('--R',Math.round(w/2/Math.tan(Math.PI/N)+w*.28)+'px')}
+  let W=0,H=0,stars=[],mx=.5,my=.5,mt=0,mouse={x:-999,y:-999,in:false},ripples=[],shoot=null,stir=0,nextDrop=0,rgb=hex(products[0].c),lastScale=7;
+  function resize(){
+    const r=scene.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;if(!W)return;
+    [sky,rip].forEach(c=>{c.width=W*d;c.height=H*d;c.getContext('2d').setTransform(d,0,0,d,0,0)});
+    stars=Array.from({length:Math.round(W*H/2600)},()=>({x:Math.random(),y:Math.random()*.6,z:Math.random(),p:Math.random()*6.28,s:.4+Math.random()*1.4}));
+    const w=cards[0].offsetWidth;if(w)scene.style.setProperty('--R',Math.round(w/2/Math.tan(Math.PI/N)+w*.55)+'px');
+  }
   function snap(i){const want=-i*step;target=ang+(((want-ang)%360)+540)%360-180;last=performance.now()}
   function nudge(d){target=Math.round((target==null?ang:target)/step)*step+d*step;last=performance.now()}
-  function frame(){
+  function drawSky(t){
+    sx.clearRect(0,0,W,H);const hz=H*.6,ox=(mx-.5)*-26,oy=(my-.5)*-10;
+    for(const s of stars){
+      const px=s.x*W+ox*s.z,py=s.y*H+oy*s.z,near=mouse.in?Math.max(0,1-Math.hypot(px-mouse.x,py-mouse.y)/120):0;
+      const tw=.35+.65*Math.abs(Math.sin(t*.0012*s.s+s.p)),a=Math.min(1,tw*(.5+s.z*.6)+near*.7),r=(.4+s.z*1.2)*(1+near*1.8);
+      sx.fillStyle='rgba('+(s.z>.8?'190,215,255':'255,255,255')+','+a+')';
+      sx.beginPath();sx.arc(px,py,r,0,6.283);sx.fill();
+      const ry=2*hz-py;if(ry<H){sx.fillStyle='rgba(200,220,255,'+a*.28+')';sx.beginPath();sx.arc(px+Math.sin(t*.002+py*.06)*3,ry,r*.8,0,6.283);sx.fill()}
+    }
+    if(!RM&&!shoot&&Math.random()<.002)shoot={x:Math.random()*W*.7,y:Math.random()*hz*.5,l:0};
+    if(shoot){shoot.l++;shoot.x+=9;shoot.y+=3.6;const al=1-shoot.l/40;
+      const g=sx.createLinearGradient(shoot.x,shoot.y,shoot.x-70,shoot.y-28);g.addColorStop(0,'rgba(255,255,255,'+al+')');g.addColorStop(1,'rgba(255,255,255,0)');
+      sx.strokeStyle=g;sx.lineWidth=1.6;sx.beginPath();sx.moveTo(shoot.x,shoot.y);sx.lineTo(shoot.x-70,shoot.y-28);sx.stroke();if(shoot.l>40)shoot=null}
+  }
+  function drawRip(){
+    rx.clearRect(0,0,W,H);const now=performance.now();
+    if(!RM&&now>nextDrop){nextDrop=now+1200+Math.random()*1800;ripples.push({x:W*(.1+Math.random()*.8),y:H*(.66+Math.random()*.28),t:now,a:.25})}
+    ripples=ripples.filter(r=>now-r.t<1600);
+    for(const r of ripples){const k=(now-r.t)/1600,rad=10+k*130,al=r.a*(1-k)*(1-k);
+      rx.lineWidth=1.5;rx.strokeStyle='rgba('+rgb+','+al+')';rx.beginPath();rx.ellipse(r.x,r.y,rad,rad*.24,0,0,6.283);rx.stroke();
+      if(k>.15){rx.strokeStyle='rgba(255,255,255,'+al*.5+')';rx.beginPath();rx.ellipse(r.x,r.y,rad*.6,rad*.6*.24,0,0,6.283);rx.stroke()}}
+  }
+  function frame(t){
     const now=performance.now();
     if(!drag){
       if(target!=null){ang+=(target-ang)*.12;vel=0;if(Math.abs(target-ang)<.05){ang=target;target=null}}
       else{ang+=vel;vel*=.95;if(Math.abs(vel)<.02)vel=0;if(!RM&&vel===0&&now-last>2500)ang+=.06}
     }
-    ring.style.transform='rotateY('+ang+'deg)';
-    pool.style.setProperty('--amp',1+Math.min(1.5,Math.abs(vel)/3));
+    const tf='rotateY('+ang+'deg)';ring.style.transform=tf;ring2.style.transform=tf;
     let best=0,bd=999;
     for(let i=0;i<N;i++){
       const a=(((i*step+ang)%360)+540)%360-180,o=.25+.75*Math.max(0,Math.cos(a*Math.PI/180));
-      cards[i].style.opacity=o;refs[i].style.opacity=o*.4;
-      if(Math.abs(a)<bd){bd=Math.abs(a);best=i}
+      cards[i].style.opacity=o;refs[i].style.opacity=o*.55;if(Math.abs(a)<bd){bd=Math.abs(a);best=i}
     }
-    if(best!==front){front=best;const p=list[best];scene.style.setProperty('--g',p.c);$('mhName').textContent=p.name;$('mhPrice').textContent=' — '+fmt(p.price)}
+    if(best!==front){front=best;const p=list[best];rgb=hex(p.c);scene.style.setProperty('--g',p.c);
+      $('mhName').textContent=p.name;$('mhPrice').textContent=fmt(p.price);$('mhCount').textContent=nf.format(best%P6+1)+' / '+nf.format(P6);
+      [...$('mhDots').children].forEach((d,k)=>d.classList.toggle('on',k===best%P6))}
+    stir*=.94;const sc=7+stir*24;if(Math.abs(sc-lastScale)>.4){lastScale=sc;disp.setAttribute('scale',sc.toFixed(1))}
+    if(W){drawSky(t);drawRip()}
   }
-  function loop(){if(!vis){running=false;return}frame();requestAnimationFrame(loop)}
-  new IntersectionObserver(es=>{vis=es[0].isIntersecting;if(vis){size();if(!running){running=true;requestAnimationFrame(loop)}}}).observe(scene);
-  addEventListener('resize',size);
+  function loop(t){if(!vis){running=false;return}frame(t);requestAnimationFrame(loop)}
+  new IntersectionObserver(es=>{vis=es[0].isIntersecting;if(vis){resize();if(!running){running=true;requestAnimationFrame(loop)}}}).observe(scene);
+  addEventListener('resize',resize);
+  scene.addEventListener('pointermove',e=>{
+    const r=scene.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,now=performance.now(),v=Math.hypot(x-mouse.x,y-mouse.y)/Math.max(8,now-mt);
+    mt=now;mouse.x=x;mouse.y=y;mouse.in=true;mx=x/(W||1);my=y/(H||1);stir=Math.min(1,stir+Math.min(v,3)*.12);
+    scene.style.setProperty('--px',(50+(mx-.5)*14)+'%');scene.style.setProperty('--py',(30+(my-.5)*10)+'%');
+    if(!RM&&y>H*.6&&(!ripples.length||now-ripples[ripples.length-1].t>80))ripples.push({x,y,t:now,a:.45+Math.min(.35,v*.2)});
+  });
+  scene.addEventListener('pointerleave',()=>mouse.in=false);
   function mv(e){const dx=e.clientX-x0;x0=e.clientX;moved+=Math.abs(dx);ang+=dx*.4;vel=dx*.4;last=performance.now()}
   function up(){drag=false;removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up)}
   scene.addEventListener('pointerdown',e=>{drag=true;target=null;x0=e.clientX;moved=0;vel=0;last=performance.now();addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)});
   $('mhPrev').addEventListener('click',()=>nudge(1));$('mhNext').addEventListener('click',()=>nudge(-1));
   scene.addEventListener('keydown',e=>{if(e.key==='ArrowRight')nudge(1);else if(e.key==='ArrowLeft')nudge(-1);else if(e.key==='Enter'&&front>-1)location.hash='#p'+list[front].id});
 })();
+/* ---- product photo helper: images/p1.webp|png|jpg, falls back to SVG art ---- */
+/* ---- checkout ---- */
+const SHOP={wa:''}; // واتساپ فروشگاه، مثلاً '989121234567' (بدون + و صفر اول)
+const SHIP_FEE=150000;
+const toEn=s=>String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const RULES={
+  coName:[v=>v.trim().length>=3,'نام و نام خانوادگی را کامل وارد کنید.'],
+  coPhone:[v=>/^09\d{9}$/.test(toEn(v).trim()),'شمارهٔ موبایل باید ۱۱ رقم و مثل ۰۹۱۲۳۴۵۶۷۸۹ باشد.'],
+  coCity:[v=>v.trim().length>=2,'نام شهر را وارد کنید.'],
+  coPostal:[v=>/^\d{10}$/.test(toEn(v).trim()),'کد پستی باید ۱۰ رقم باشد.'],
+  coAddr:[v=>v.trim().length>=10,'نشانی را کامل‌تر بنویسید (خیابان، پلاک، واحد).']
+};
+function fieldCheck(id){const f=$(id),good=RULES[id][0](f.value);f.parentNode.classList.toggle('err',!good);f.parentNode.querySelector('small').textContent=good?'':RULES[id][1];f.setAttribute('aria-invalid',String(!good));return good}
+function renderCheckout(){
+  const empty=!cart.size;$('coDone').classList.add('hide');$('coWrap').classList.toggle('hide',empty);$('coEmpty').classList.toggle('hide',!empty);
+  const t=totals(),ship=(t.t>=FREE||empty)?0:SHIP_FEE,box=$('coSum');box.replaceChildren(el('h3',null,'خلاصهٔ سفارش'));
+  const row=(a,b,c)=>{const r=el('div','sum'+(c?' total':''));r.append(el('span',null,a),el('span',null,b));box.append(r)};
+  cart.forEach((q,id)=>{const p=products.find(x=>x.id===id);row(p.name+' × '+nf.format(q),fmt(p.price*q))});
+  row('جمع کالاها',fmt(t.sub));if(t.d)row('تخفیف','− '+fmt(t.d));row('هزینهٔ ارسال',ship?fmt(ship):'رایگان');row('مبلغ نهایی',fmt(t.t+ship),1);
+}
+$('coForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const bad=Object.keys(RULES).filter(id=>!fieldCheck(id));
+  if(bad.length){$(bad[0]).focus();return}
+  const t=totals(),ship=t.t>=FREE?0:SHIP_FEE,code='NOIR-'+Math.floor(100000+Math.random()*900000);
+  const pay=document.querySelector('input[name=pay]:checked').value;
+  const lines=[...cart].map(([id,q])=>'• '+products.find(x=>x.id===id).name+' × '+q);
+  const msg=['سفارش '+code,...lines,'مبلغ نهایی: '+fmt(t.t+ship),'پرداخت: '+(pay==='cod'?'در محل':'آنلاین'),'نام: '+$('coName').value.trim(),'موبایل: '+toEn($('coPhone').value).trim(),'نشانی: '+$('coCity').value.trim()+'، '+$('coAddr').value.trim()+' (کدپستی '+toEn($('coPostal').value).trim()+')'].join('\n');
+  const d=$('coDone');d.replaceChildren(el('h2',null,'سفارش شما ثبت شد (نمایشی)'),el('p','muted','کد پیگیری: '+code+' — این نسخه بک‌اند ندارد و سفارش یا پرداختی واقعاً ثبت نشده است.'));
+  if(SHOP.wa)d.append(el('a','btn primary','ارسال سفارش در واتساپ',{href:'https://wa.me/'+SHOP.wa+'?text='+encodeURIComponent(msg),target:'_blank',rel:'noopener'}));
+  d.append(el('a','btn','بازگشت به فروشگاه',{href:'#home'}));
+  $('coWrap').classList.add('hide');d.classList.remove('hide');cart.clear();coupon=null;renderCart();window.scrollTo(0,0);
+});
+Object.keys(RULES).forEach(id=>$(id).addEventListener('blur',()=>fieldCheck(id)));
+function setView(v){const on=v==='img';$('pPhoto').classList.toggle('hide',!on);$('pdpView').classList.toggle('photo-on',on);
+  if(pdpSpin)pdpSpin.obj.parentNode.style.display=on?'none':'';
+  document.querySelectorAll('#pSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v))}
+$('pSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setView(b.dataset.v)});
 renderCats();renderProducts();renderCart();route();

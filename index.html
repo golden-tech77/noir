@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<a class="skip" href="#products">پرش به محتوا</a>
 <div class="demo">نسخهٔ نمایشی NOIR — محصولات و قیمت‌ها آزمایشی هستند؛ فروش واقعی فعال نیست.</div>
 <header>
   <a class="logo" href="#home">N<span>O</span>IR.</a>
@@ -44,12 +45,18 @@
   <div class="grid" id="grid" aria-live="polite"></div>
 </section>
 <section class="section" id="mirror" aria-label="تالار آینه">
-  <div class="eyebrow">MIRROR HALL / 02</div><h2>تالار آینه</h2>
-  <div class="muted">حلقه را بکشید و رها کنید تا با شتاب بچرخد؛ روی کارت بزنید تا صفحهٔ محصول باز شود.</div>
+  <div class="eyebrow">NOIR · COLLECTION Nº 01</div><h2>تالار آینه</h2>
+  <div class="muted">محصولات معلق بر آبِ ساکن؛ حلقه را بکشید و موس را روی آب حرکت دهید.</div>
   <div class="mh-scene" id="mhScene" tabindex="0" role="group" aria-roledescription="carousel" aria-label="چرخ‌وفلک سه‌بعدی محصولات؛ با کلیدهای چپ و راست بچرخانید">
-    <div class="mh-world"><div class="mh-pool" id="mhPool"><i></i><i></i><i></i></div><div class="mh-ring" id="mhRing"></div></div>
+    <canvas class="mh-sky" id="mhSky" aria-hidden="true"></canvas>
+    <div class="mh-surface"></div>
+    <div class="mh-layer mh-water"><div class="mh-world"><div class="mh-ring" id="mhRing2"></div></div></div>
+    <div class="mh-layer mh-front"><div class="mh-world"><div class="mh-ring" id="mhRing"></div></div></div>
+    <canvas class="mh-rip" id="mhRip" aria-hidden="true"></canvas>
+    <div class="mh-hud"><div class="mh-count" id="mhCount"></div><div class="mh-title" id="mhName" aria-live="polite"></div><div class="muted" id="mhPrice"></div><div class="mh-dots" id="mhDots"></div></div>
   </div>
-  <div class="mh-cap"><button class="btn" id="mhPrev" aria-label="قبلی">→</button><div aria-live="polite"><b id="mhName"></b><span class="muted" id="mhPrice"></span></div><button class="btn" id="mhNext" aria-label="بعدی">←</button></div>
+  <div class="mh-cap"><button class="btn" id="mhPrev" aria-label="قبلی">→</button><button class="btn" id="mhNext" aria-label="بعدی">←</button></div>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="mhRipple" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.004 0.05" numOctaves="2" seed="3" result="n"><animate attributeName="baseFrequency" dur="16s" values="0.004 0.05;0.007 0.07;0.004 0.05" repeatCount="indefinite"/></feTurbulence><feDisplacementMap id="mhDisp" in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
 </section>
 <section class="section" id="about"><h2>انتخاب متفاوت تو.</h2><p class="muted">NOIR؛ یک تجربهٔ طراحی برای دنیای گجت‌ها.</p></section>
 </div>
@@ -57,7 +64,7 @@
 <main class="section hide" id="productView">
   <div class="crumb"><a href="#home">خانه</a> / <a href="#products">محصولات</a> / <span id="crumbName"></span></div>
   <div class="pdp" id="pdp">
-    <div class="view" id="pdpView"><div class="shadow"></div><div class="hint">بکشید تا بچرخد — یا فایل .glb را اینجا رها کنید</div></div>
+    <div class="view" id="pdpView"><div class="photo hide" id="pPhoto"></div><div class="seg" id="pSeg" hidden><button class="on" data-v="3d">سه‌بعدی</button><button data-v="img">عکس</button></div><div class="shadow"></div><div class="hint">بکشید تا بچرخد — یا فایل .glb را اینجا رها کنید</div></div>
     <div>
       <div class="eyebrow" id="pCat"></div><h1 id="pName"></h1><p class="muted" id="pDesc"></p>
       <ul class="specs" id="pSpecs"></ul>
@@ -66,6 +73,28 @@
     </div>
   </div>
   <h2 style="margin-top:44px">محصولات مرتبط</h2><div class="grid" id="related" style="margin-top:16px"></div>
+</main>
+<main class="section hide" id="checkoutView">
+  <div class="crumb"><a href="#home">خانه</a> / <span>تکمیل سفارش</span></div>
+  <h2>تکمیل سفارش</h2>
+  <p class="muted hide" id="coEmpty">سبد خرید خالی است. <a href="#products">بازگشت به محصولات</a></p>
+  <div class="co" id="coWrap">
+    <form id="coForm" novalidate>
+      <div class="two">
+        <div class="fld"><label for="coName">نام و نام خانوادگی</label><input id="coName" autocomplete="name"><small></small></div>
+        <div class="fld"><label for="coPhone">شمارهٔ موبایل</label><input id="coPhone" inputmode="tel" autocomplete="tel" placeholder="۰۹۱۲۳۴۵۶۷۸۹"><small></small></div>
+      </div>
+      <div class="two">
+        <div class="fld"><label for="coCity">شهر</label><input id="coCity" autocomplete="address-level2"><small></small></div>
+        <div class="fld"><label for="coPostal">کد پستی (۱۰ رقم)</label><input id="coPostal" inputmode="numeric" autocomplete="postal-code"><small></small></div>
+      </div>
+      <div class="fld"><label for="coAddr">نشانی کامل</label><textarea id="coAddr" rows="3" autocomplete="street-address"></textarea><small></small></div>
+      <fieldset class="pay"><legend>روش پرداخت</legend><label><input type="radio" name="pay" value="online" checked> پرداخت آنلاین (نمایشی)</label><label><input type="radio" name="pay" value="cod"> پرداخت در محل</label></fieldset>
+      <button class="btn primary" type="submit" style="width:100%;margin-top:14px">ثبت سفارش</button>
+    </form>
+    <aside class="co-sum" id="coSum" aria-live="polite"></aside>
+  </div>
+  <div class="co-done hide" id="coDone" role="status"></div>
 </main>
 <footer>NOIR © ۲۰۲۶ — نسخهٔ نمایشی فروشگاه</footer>
 
@@ -79,7 +108,7 @@
     <div class="sum"><span>جمع کالاها</span><span id="subTotal"></span></div>
     <div class="sum"><span>تخفیف</span><span id="discount"></span></div>
     <div class="sum total"><span>مبلغ قابل پرداخت</span><span id="cartTotal"></span></div>
-    <button class="btn primary" id="demoCheckout" style="width:100%">ادامهٔ نمایشی</button>
+    <button class="btn primary" id="demoCheckout" style="width:100%">ادامه و ثبت سفارش</button>
     <p class="muted">پرداخت و ثبت سفارش واقعی در این نسخه فعال نیست.</p>
   </div>
 </div>
